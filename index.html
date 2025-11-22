@@ -233,7 +233,7 @@
                             <span>📤</span>
                             <span>Upload Doc</span>
                         </label>
-                        <input class="hidden" type="file" name="file" id="uploadFile" accept=".txt,.doc,.docx,.pdf">
+                        <input class="hidden" type="file" name="file" id="uploadFile" accept=".txt">
                         
                         <div class="separator"></div>
                         
@@ -379,13 +379,17 @@
             execCommand('fontName', e.target.value);
         });
         
-        // Font size
+        // Font size - Using fontSize command with value 7 as a temporary marker,
+        // then replacing with actual CSS font-size for better control
         fontSize.addEventListener('change', (e) => {
+            const selectedSize = e.target.value;
+            // Use fontSize 7 as a temporary marker for the selected text
             execCommand('fontSize', '7');
+            // Find all elements with size="7" and replace with our custom size
             const fontElements = editor.querySelectorAll('font[size="7"]');
             fontElements.forEach(element => {
                 element.removeAttribute('size');
-                element.style.fontSize = e.target.value;
+                element.style.fontSize = selectedSize;
             });
         });
         
@@ -405,21 +409,22 @@
             }
         });
         
-        // File upload
+        // File upload (supports .txt files)
         uploadFile.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
+            
+            if (!file.name.endsWith('.txt')) {
+                alert('Por favor, selecciona un archivo de texto (.txt)');
+                uploadFile.value = '';
+                return;
+            }
             
             const reader = new FileReader();
             
             reader.onload = (event) => {
                 const content = event.target.result;
-                if (file.name.endsWith('.txt')) {
-                    editor.innerHTML = content.replace(/\n/g, '<br>');
-                } else {
-                    // For other file types, just display as text
-                    editor.textContent = content;
-                }
+                editor.innerHTML = content.replace(/\n/g, '<br>');
             };
             
             reader.readAsText(file);
