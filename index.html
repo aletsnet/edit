@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Procesador de Texto</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .cs-editor {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .toolbar {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .toolbar button, .toolbar select {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            background-color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+
+        .toolbar button:hover {
+            background-color: #e9ecef;
+        }
+
+        .toolbar button.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        .toolbar button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .uploadFileBtn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 8px 12px;
+            background-color: #007bff;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            border: none;
+            font-size: 14px;
+        }
+
+        .uploadFileBtn:hover {
+            background-color: #0056b3;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .editor-content {
+            min-height: 400px;
+            padding: 20px;
+            outline: none;
+            font-size: 14px;
+            line-height: 1.6;
+            overflow-y: auto;
+            max-height: 600px;
+        }
+
+        .editor-content:empty:before {
+            content: attr(placeholder);
+            color: #999;
+        }
+
+        .btns-div {
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-top: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-action {
+            padding: 8px 16px;
+            border: 1px solid #ccc;
+            background-color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-action:hover {
+            background-color: #e9ecef;
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            background-color: white;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            border-radius: 4px;
+            z-index: 1;
+            margin-bottom: 5px;
+        }
+
+        .dropdown-content button {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            border: none;
+            background-color: transparent;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .dropdown-content button:hover {
+            background-color: #f1f1f1;
+        }
+
+        .dropdown.active .dropdown-content {
+            display: block;
+        }
+
+        .action-buttons {
+            margin-top: 20px;
+            text-align: center;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn-wrap {
+            padding: 12px 24px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+
+        .btn-wrap:hover {
+            background-color: #0056b3;
+        }
+
+        .separator {
+            width: 1px;
+            height: 24px;
+            background-color: #ddd;
+            margin: 0 5px;
+        }
+
+        select.font-family {
+            min-width: 130px;
+        }
+
+        select.font-size {
+            min-width: 80px;
+        }
+
+        .icon {
+            width: 20px;
+            height: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Procesador de Texto</h1>
+        
+        <div class="col-md-12 noP">
+            <form id="form">
+                <div class="cs-editor">
+                    <div class="toolbar">
+                        <label for="uploadFile" class="uploadFileBtn">
+                            <span>📤</span>
+                            <span>Upload Doc</span>
+                        </label>
+                        <input class="hidden" type="file" name="file" id="uploadFile" accept=".txt,.doc,.docx,.pdf">
+                        
+                        <div class="separator"></div>
+                        
+                        <button type="button" id="undoBtn" title="Deshacer">↶</button>
+                        <button type="button" id="redoBtn" title="Rehacer">↷</button>
+                        
+                        <div class="separator"></div>
+                        
+                        <select class="font-family" id="fontFamily">
+                            <option value="Arial">Arial</option>
+                            <option value="Helvetica" selected>Helvetica</option>
+                            <option value="Times New Roman">Times New Roman</option>
+                            <option value="Courier New">Courier New</option>
+                            <option value="Georgia">Georgia</option>
+                            <option value="Verdana">Verdana</option>
+                        </select>
+                        
+                        <select class="font-size" id="fontSize">
+                            <option value="10px">10pt</option>
+                            <option value="12px" selected>12pt</option>
+                            <option value="14px">14pt</option>
+                            <option value="16px">16pt</option>
+                            <option value="18px">18pt</option>
+                            <option value="20px">20pt</option>
+                            <option value="24px">24pt</option>
+                        </select>
+                        
+                        <div class="separator"></div>
+                        
+                        <button type="button" id="boldBtn" title="Negrita"><b>B</b></button>
+                        <button type="button" id="italicBtn" title="Cursiva"><i>I</i></button>
+                        <button type="button" id="underlineBtn" title="Subrayado"><u>U</u></button>
+                        <button type="button" id="strikeBtn" title="Tachado"><s>S</s></button>
+                        
+                        <div class="separator"></div>
+                        
+                        <button type="button" id="alignLeftBtn" title="Alinear izquierda">≡</button>
+                        <button type="button" id="alignCenterBtn" title="Centrar">≣</button>
+                        <button type="button" id="alignRightBtn" title="Alinear derecha">≡</button>
+                        <button type="button" id="alignJustifyBtn" title="Justificar">▤</button>
+                        
+                        <div class="separator"></div>
+                        
+                        <button type="button" id="orderedListBtn" title="Lista numerada">1. 2. 3.</button>
+                        <button type="button" id="unorderedListBtn" title="Lista con viñetas">• • •</button>
+                        
+                        <div class="separator"></div>
+                        
+                        <button type="button" id="linkBtn" title="Insertar enlace">🔗</button>
+                        <button type="button" id="imageBtn" title="Insertar imagen">🖼️</button>
+                    </div>
+                    
+                    <div class="editor-content" id="textbox" contenteditable="true" placeholder="Start typing here..."></div>
+                    
+                    <div class="btns-div">
+                        <div class="button-group">
+                            <div class="dropdown" id="downloadDropdown">
+                                <button type="button" class="btn-action" id="downloadBtn">
+                                    <span>💾</span>
+                                    <span>Download</span>
+                                </button>
+                                <div class="dropdown-content">
+                                    <button type="button" class="download-file" data-type="txt">Save as TXT</button>
+                                    <button type="button" class="download-file" data-type="pdf">Save as PDF</button>
+                                    <button type="button" class="download-file" data-type="doc">Save as DOC</button>
+                                </div>
+                            </div>
+                            
+                            <button type="button" class="btn-action" id="clearBtn">
+                                <span>🗑️</span>
+                                <span>Clear</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            
+            <div class="action-buttons">
+                <a href="https://www.prepostseo.com/es/grammar-checker" target="_blank" class="btn-wrap">
+                    Check Grammar
+                </a>
+                <a href="https://www.prepostseo.com/es/paraphrasing-tool" target="_blank" class="btn-wrap">
+                    Paraphrase It
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Editor element
+        const editor = document.getElementById('textbox');
+        const uploadFile = document.getElementById('uploadFile');
+        const downloadDropdown = document.getElementById('downloadDropdown');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        
+        // Toolbar buttons
+        const undoBtn = document.getElementById('undoBtn');
+        const redoBtn = document.getElementById('redoBtn');
+        const boldBtn = document.getElementById('boldBtn');
+        const italicBtn = document.getElementById('italicBtn');
+        const underlineBtn = document.getElementById('underlineBtn');
+        const strikeBtn = document.getElementById('strikeBtn');
+        const alignLeftBtn = document.getElementById('alignLeftBtn');
+        const alignCenterBtn = document.getElementById('alignCenterBtn');
+        const alignRightBtn = document.getElementById('alignRightBtn');
+        const alignJustifyBtn = document.getElementById('alignJustifyBtn');
+        const orderedListBtn = document.getElementById('orderedListBtn');
+        const unorderedListBtn = document.getElementById('unorderedListBtn');
+        const linkBtn = document.getElementById('linkBtn');
+        const imageBtn = document.getElementById('imageBtn');
+        const fontFamily = document.getElementById('fontFamily');
+        const fontSize = document.getElementById('fontSize');
+
+        // Execute command
+        function execCommand(command, value = null) {
+            document.execCommand(command, false, value);
+            editor.focus();
+        }
+
+        // Format buttons
+        boldBtn.addEventListener('click', () => execCommand('bold'));
+        italicBtn.addEventListener('click', () => execCommand('italic'));
+        underlineBtn.addEventListener('click', () => execCommand('underline'));
+        strikeBtn.addEventListener('click', () => execCommand('strikeThrough'));
+        
+        // Alignment buttons
+        alignLeftBtn.addEventListener('click', () => execCommand('justifyLeft'));
+        alignCenterBtn.addEventListener('click', () => execCommand('justifyCenter'));
+        alignRightBtn.addEventListener('click', () => execCommand('justifyRight'));
+        alignJustifyBtn.addEventListener('click', () => execCommand('justifyFull'));
+        
+        // List buttons
+        orderedListBtn.addEventListener('click', () => execCommand('insertOrderedList'));
+        unorderedListBtn.addEventListener('click', () => execCommand('insertUnorderedList'));
+        
+        // Undo/Redo
+        undoBtn.addEventListener('click', () => execCommand('undo'));
+        redoBtn.addEventListener('click', () => execCommand('redo'));
+        
+        // Font family
+        fontFamily.addEventListener('change', (e) => {
+            execCommand('fontName', e.target.value);
+        });
+        
+        // Font size
+        fontSize.addEventListener('change', (e) => {
+            execCommand('fontSize', '7');
+            const fontElements = editor.querySelectorAll('font[size="7"]');
+            fontElements.forEach(element => {
+                element.removeAttribute('size');
+                element.style.fontSize = e.target.value;
+            });
+        });
+        
+        // Link button
+        linkBtn.addEventListener('click', () => {
+            const url = prompt('Enter the URL:');
+            if (url) {
+                execCommand('createLink', url);
+            }
+        });
+        
+        // Image button
+        imageBtn.addEventListener('click', () => {
+            const url = prompt('Enter the image URL:');
+            if (url) {
+                execCommand('insertImage', url);
+            }
+        });
+        
+        // File upload
+        uploadFile.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            
+            reader.onload = (event) => {
+                const content = event.target.result;
+                if (file.name.endsWith('.txt')) {
+                    editor.innerHTML = content.replace(/\n/g, '<br>');
+                } else {
+                    // For other file types, just display as text
+                    editor.textContent = content;
+                }
+            };
+            
+            reader.readAsText(file);
+            uploadFile.value = ''; // Reset input
+        });
+        
+        // Clear editor
+        clearBtn.addEventListener('click', () => {
+            if (confirm('¿Estás seguro de que quieres limpiar el editor?')) {
+                editor.innerHTML = '';
+            }
+        });
+        
+        // Download dropdown toggle
+        downloadBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            downloadDropdown.classList.toggle('active');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!downloadDropdown.contains(e.target)) {
+                downloadDropdown.classList.remove('active');
+            }
+        });
+        
+        // Download functionality
+        const downloadButtons = document.querySelectorAll('.download-file');
+        downloadButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const type = button.getAttribute('data-type');
+                downloadFile(type);
+                downloadDropdown.classList.remove('active');
+            });
+        });
+        
+        function downloadFile(type) {
+            const content = editor.innerHTML;
+            const textContent = editor.innerText;
+            
+            if (!textContent.trim()) {
+                alert('El editor está vacío. No hay nada que descargar.');
+                return;
+            }
+            
+            let blob, filename;
+            
+            switch(type) {
+                case 'txt':
+                    blob = new Blob([textContent], { type: 'text/plain' });
+                    filename = 'document.txt';
+                    break;
+                    
+                case 'pdf':
+                    // For PDF, we'll create a simple HTML that can be printed as PDF
+                    const pdfContent = `
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <meta charset="UTF-8">
+                            <title>Document</title>
+                            <style>
+                                body { font-family: Arial, sans-serif; padding: 20px; }
+                            </style>
+                        </head>
+                        <body>${content}</body>
+                        </html>
+                    `;
+                    blob = new Blob([pdfContent], { type: 'text/html' });
+                    filename = 'document.html';
+                    alert('Se descargará un archivo HTML. Ábrelo y usa "Imprimir > Guardar como PDF" para crear un PDF.');
+                    break;
+                    
+                case 'doc':
+                    // Create a simple DOC format (HTML-based)
+                    const docContent = `
+                        <!DOCTYPE html>
+                        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'>
+                        <head>
+                            <meta charset='utf-8'>
+                            <title>Document</title>
+                        </head>
+                        <body>${content}</body>
+                        </html>
+                    `;
+                    blob = new Blob(['\ufeff', docContent], { 
+                        type: 'application/msword' 
+                    });
+                    filename = 'document.doc';
+                    break;
+            }
+            
+            // Create download link
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        // Update button states based on selection
+        editor.addEventListener('mouseup', updateToolbarState);
+        editor.addEventListener('keyup', updateToolbarState);
+        
+        function updateToolbarState() {
+            boldBtn.classList.toggle('active', document.queryCommandState('bold'));
+            italicBtn.classList.toggle('active', document.queryCommandState('italic'));
+            underlineBtn.classList.toggle('active', document.queryCommandState('underline'));
+            strikeBtn.classList.toggle('active', document.queryCommandState('strikeThrough'));
+        }
+        
+        // Prevent form submission
+        document.getElementById('form').addEventListener('submit', (e) => {
+            e.preventDefault();
+        });
+    </script>
+</body>
+</html>
