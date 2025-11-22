@@ -1,0 +1,6 @@
+Este es un archivo de ejemplo para probar la funcionalidad de carga del procesador de texto.
+
+Puede contener múltiples líneas.
+Y diferentes tipos de contenido.
+
+¡Prueba cargar este archivo en el procesador de texto!
